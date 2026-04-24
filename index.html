@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Event Spinner</title>
+
+<style>
+body {
+    margin: 0;
+    background: black;
+    color: white;
+    font-family: Arial;
+    text-align: center;
+}
+
+h1, p { margin: 0; }
+
+/* ===== PAGES ===== */
+.page {
+    display: none;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    transition: opacity 1s ease;
+}
+.active { display: flex; }
+
+/* ===== INTRO ===== */
+#intro video {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tap-msg {
+    position: absolute;
+    bottom: 40px;
+    font-size: 22px;
+    color: #00e676;
+}
+
+/* ===== PROFILE ===== */
+
+/* header typing */
+.typing-header {
+    font-size: 60px;
+    color: #00e676;
+    margin-bottom: 40px;
+    white-space: nowrap;
+}
+
+/* cursor */
+.cursor::after {
+    content: "|";
+    margin-left: 5px;
+    animation: blink 1s infinite;
+}
+@keyframes blink {
+    0%,50%,100% { opacity: 1; }
+    25%,75% { opacity: 0; }
+}
+
+/* profile card */
+.profile-card {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: 1s;
+    width: 100%;
+    max-width: 700px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.profile-card.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* fade out */
+.fade-out {
+    opacity: 0 !important;
+}
+
+/* avatar */
+.avatar {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    padding: 4px;
+    background: #00e676;
+}
+.avatar-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    overflow: hidden;
+}
+.avatar-inner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* name */
+.name {
+    font-size: 50px;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    letter-spacing: 1.5px;
+    word-spacing: 6px;
+}
+
+/* username + roles */
+.username { opacity: 0; color: #aaa; font-size: 20px; }
+.roles { opacity: 0; color: #00e676; font-size: 20px; }
+
+/* ===== ORIGINAL UI ===== */
+input {
+    font-size: 50px;
+    padding: 20px;
+    width: 250px;
+    text-align: center;
+    border-radius: 10px;
+    border: none;
+}
+
+button {
+    margin: 10px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.start-btn {
+    background: #00e676;
+    color: black;
+    font-size: 26px;
+    padding: 15px 30px;
+}
+
+.reset-btn {
+    background: #ff1744;
+    color: white;
+    font-size: 20px;
+    padding: 10px 25px;
+}
+
+.pointer {
+    width: 0;
+    height: 0;
+    border-left: 25px solid transparent;
+    border-right: 25px solid transparent;
+    border-top: 50px solid yellow;
+    margin: 0 auto;
+    transform: translateY(-20px);
+}
+
+.wheel-box { position: relative; }
+
+.center-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #111;
+    border: 3px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.result {
+    font-size: 120px;
+    margin-top: 10px;
+}
+
+.timer {
+    font-size: 120px;
+    font-weight: bold;
+    color: #ffea00;
+}
+
+.round-btn {
+    background: #00e676;
+    color: black;
+    font-size: 22px;
+    padding: 12px 25px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- INTRO -->
+<div id="intro" class="page active">
+    <video id="introVideo" playsinline>
+        <source src="intro.mp4">
+    </video>
+    <div id="tapMsg" class="tap-msg">Tap or Press Space to Start</div>
+</div>
+
+<!-- PROFILE -->
+<div id="profile" class="page">
+    <div id="header" class="typing-header"></div>
+
+    <div class="profile-card" id="profileCard">
+        <div class="avatar">
+            <div class="avatar-inner">
+                <img src="profile.jpeg">
+            </div>
+        </div>
+
+        <h1 class="name" id="nameText"></h1>
+        <p class="username" id="username">mr.White Hat | sdroxryn</p>
+        <br>
+        <div class="roles" id="roles">
+            Developer • Designer • Creator
+        </div>
+    </div>
+</div>
+
+<!-- SETUP -->
+<div id="setup" class="page">
+    <h1>Enter Participants</h1><br><br><br>
+    <input id="count" type="number" min="2"> <br><br>
+    <button class="start-btn" onclick="startApp()">START</button>
+    <button class="reset-btn" onclick="location.reload()">RESET</button>
+</div>
+
+<!-- SPINNER -->
+<div id="spinner" class="page">
+    <div class="pointer"></div>
+
+    <div class="wheel-box">
+        <canvas id="wheel" width="400" height="400"></canvas>
+        <div class="center-btn" onclick="spin()">SPIN</div>
+    </div>
+
+    <div id="result" class="result">---</div>
+    <button class="round-btn" onclick="goTimer()">START ROUND</button>
+</div>
+
+<!-- TIMER -->
+<div id="timerPage" class="page">
+    <div id="timer" class="timer">00:00</div>
+</div>
+
+<audio id="alarm">
+    <source src="beep.mpeg" type="audio/mpeg">
+</audio>
+
+<script>
+let currentPage="intro";
+const video=document.getElementById("introVideo");
+
+/* start video */
+function startVideo(){
+    if(currentPage!=="intro") return;
+    tapMsg.style.display="none";
+    video.play();
+}
+
+document.addEventListener("click", startVideo);
+document.addEventListener("keydown",e=>{
+    if(e.code==="Space"){
+        e.preventDefault();
+        startVideo();
+    }
+});
+
+/* typing with cursor */
+function type(text, el, speed=100){
+    return new Promise(resolve=>{
+        let i=0;
+        el.innerHTML="";
+        el.classList.add("cursor");
+
+        function t(){
+            if(i<text.length){
+                el.innerHTML += text[i]===" " ? "&nbsp;" : text[i];
+                i++;
+                setTimeout(t,speed);
+            } else {
+                el.classList.remove("cursor");
+                resolve();
+            }
+        }
+        t();
+    });
+}
+
+function delay(ms){
+    return new Promise(res=>setTimeout(res,ms));
+}
+
+/* PROFILE FLOW (UPDATED ONLY THIS PART) */
+video.addEventListener("ended", async ()=>{
+
+    show("profile");
+
+    await type("Designed & Developed by", header, 80);
+
+    await delay(500);
+
+    await delay(2000);
+    profileCard.classList.add("show");
+
+    await delay(1000);
+
+    await type("Syed Roshan Riyan", nameText, 110);
+
+    await delay(400);
+
+    username.style.transition="opacity 1s";
+    username.style.opacity=1;
+
+    await delay(400);
+
+    roles.style.transition="opacity 1s";
+    roles.style.opacity=1;
+
+    await delay(4000);
+
+    profile.classList.add("fade-out");
+
+    await delay(1000);
+
+    show("setup");
+});
+
+/* ===== ORIGINAL LOGIC (UNCHANGED) ===== */
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+
+let numbers=[], colors=[];
+let rotation=0, spinning=false;
+let selectedIndex=null;
+
+const palette=["#ff3d00","#00e676","#2979ff","#ffea00","#d500f9","#00bcd4"];
+
+function show(page){
+    document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+    document.getElementById(page).classList.add("active");
+    currentPage = page;
+}
+
+function startApp(){
+    const n=parseInt(count.value);
+    if(!n || n<2) return alert("Enter valid");
+
+    numbers=Array.from({length:n},(_,i)=>i+1);
+    colors=numbers.map((_,i)=>palette[i%palette.length]);
+
+    draw();
+    show("spinner");
+}
+
+function draw(){
+    const r=200;
+    const slice=(2*Math.PI)/numbers.length;
+
+    ctx.clearRect(0,0,400,400);
+
+    numbers.forEach((num,i)=>{
+        let start=i*slice, end=start+slice;
+
+        ctx.beginPath();
+        ctx.moveTo(r,r);
+        ctx.arc(r,r,r,start,end);
+        ctx.fillStyle=colors[i];
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(r,r);
+        ctx.rotate(start+slice/2);
+        ctx.fillStyle="#000";
+        ctx.textAlign="right";
+        ctx.font="bold 20px Arial";
+        ctx.fillText(num,r-10,5);
+        ctx.restore();
+    });
+}
+
+function spin(){
+    if(spinning || numbers.length===0) return;
+
+    spinning=true;
+
+    let spinAmt=360*5+Math.random()*360;
+    let start=null;
+
+    function anim(ts){
+        if(!start) start=ts;
+        let p=ts-start;
+
+        let ease=1-Math.pow(1-p/3500,4);
+        let angle=rotation+spinAmt*ease;
+
+        ctx.save();
+        ctx.clearRect(0,0,400,400);
+        ctx.translate(200,200);
+        ctx.rotate(angle*Math.PI/180);
+        ctx.translate(-200,-200);
+        draw();
+        ctx.restore();
+
+        if(p<3500) requestAnimationFrame(anim);
+        else{
+            rotation+=spinAmt;
+            spinning=false;
+            calculateResult();
+        }
+    }
+    requestAnimationFrame(anim);
+}
+
+function calculateResult(){
+    let sliceDeg=360/numbers.length;
+    let pointer=(270-(rotation%360)+360)%360;
+    let index=Math.floor(pointer/sliceDeg)%numbers.length;
+
+    selectedIndex=index;
+    result.innerText=numbers[index];
+    result.style.color=colors[index];
+
+    numbers.splice(index,1);
+    colors.splice(index,1);
+
+    draw();
+}
+
+function goTimer(){
+    if(selectedIndex===null) return alert("Spin first");
+    show("timerPage");
+    startTimer();
+}
+
+function startTimer(){
+    let start=Date.now();
+    const alarm=document.getElementById("alarm");
+
+    const interval=setInterval(()=>{
+        let t=Math.floor((Date.now()-start)/1000);
+
+        timer.innerText=
+        `${Math.floor(t/60)}:${(t%60).toString().padStart(2,'0')}`;
+
+        if(t===58 || t===148|| t===178){
+            alarm.currentTime=0;
+            alarm.play().catch(()=>{});
+        }
+
+        if(t>=183){
+            clearInterval(interval);
+            selectedIndex=null;
+            show("spinner");
+        }
+
+    },200);
+}
+
+document.addEventListener("keydown", (e) => {
+
+    if (e.code === "Enter" && currentPage === "setup") {
+        startApp();
+        return;
+    }
+
+    if (currentPage === "spinner") {
+
+        if (e.code === "Space") {
+            e.preventDefault();
+            if (!spinning) spin();
+        }
+
+        if (e.code === "Enter" && selectedIndex !== null) {
+            goTimer();
+        }
+    }
+
+});
+</script>
+
+</body>
+</html>
